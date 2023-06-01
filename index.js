@@ -2,6 +2,7 @@
 const http = require('http');
 const fs = require('fs').promises;
 const data = require('./data/data.json');
+const { parse } = require('querystring');
 
 const server = http.createServer(async (request, response) => { // create a new server
   console.log('Server is running.');
@@ -57,6 +58,51 @@ const server = http.createServer(async (request, response) => { // create a new 
     response.writeHead(200, { "Content-Type": "image/svg+xml" });
     response.end(iconSVG);
 
+  } else if (myUrl.pathname === '/add') {
+
+    response.writeHead(200, {'Content-Type': 'text/html'});
+    const html = await fs.readFile('./view/add.html', 'utf-8');
+    response.end(html);
+
+    if (request.method === 'POST') {
+      let body = '';
+      // Collect the form data
+      request.on('data', (chunk) => { // chunk = chunk of data, 2000 bites ?
+        console.log(chunk); // here we'll get the pure hex chunk of data
+        body += chunk.toString();
+        console.log(body);
+      }).on('end', async () => {
+        const formData = parse(body); // parsing the req body
+        console.log(formData);
+        const newBicycle = {
+          id: String(data.length + 1),
+          name: formData.name,
+          hasDiscount: false, // false as default
+          originalPrice: +formData.originalPrice,
+          image: '',
+          star: 0
+        };
+        data.push(newBicycle);
+        await fs.writeFile('./data/data.json', JSON.stringify(data, null, 2));
+        console.log(data);
+      });
+
+      // try {
+      //   // rewriting the data.json file with an updated data:
+      //   await fs.writeFile('./data/data.json', JSON.stringify(data, null, 2));
+      //   response.writeHead(200, { 'Content-Type': 'text/html' });
+      //   response.end('Bicycle added successfully!');
+      // } catch (error) {
+      //   console.error('Error writing data to file:', error);
+      //   response.writeHead(500, { 'Content-Type': 'text/html' });
+      //   response.end('Internal Server Error');
+      // }
+    } else {
+      response.writeHead(200, { 'Content-Type': 'text/html' });
+      const html = await fs.readFile('./view/add.html', 'utf-8');
+      response.end(html);
+    }
+
   } else {
 
     response.writeHead(404, {'Content-Type': 'text/html'}); // set response.status to 404
@@ -88,6 +134,11 @@ function replaceHtmlTemplate(html, bicycle){
   bicycle.hasDiscount
   ? (html = html.replace(/<%DISCOUNT%>/g, `<div class="discount__rate"><p>${bicycle.discount} % Off</p></div>`))
   : (html = html.replace(/<%DISCOUNT%>/g, ``));
+
+  for (let i = 0; i < bicycle.star; i++){
+    html = html.replace(/<%STAR%>/, `checked`); //
+  }
+  html = html.replace(/<%STAR%>/, ` `); 
 
   return html;
 }

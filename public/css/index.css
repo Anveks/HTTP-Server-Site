@@ -256,3 +256,45 @@ nav header p {
   line-height: 175%;
   text-align: justify;
 }
+
+body > a{
+  font-size: 2rem;
+  background-color: inherit;
+  font-weight: bold;
+  text-decoration: none;
+  margin-left: 1rem;
+  color: #333333;
+}
+
+body > a:hover{
+  color: orange;
+}
+
+#addBicycleForm{
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  width: 50%;
+  font-size: 16px;
+  margin-top: 2rem;
+}
+
+#addBicycleForm > input {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 5px;
+  border: 1px solid black;
+}
+
+#addBicycleForm > button {
+  background-color: #28b485;
+  width: 20%;
+  margin: 1rem auto;
+  padding: 1rem;
+  font-size: 2rem;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: bold;
+  color: whitesmoke;
+  white-space: nowrap;
+}

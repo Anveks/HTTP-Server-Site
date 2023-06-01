@@ -50,5 +50,13 @@
     "originalPrice": 1500,
     "image": "5.png",
     "star": 5
+  },
+  {
+    "id": "7",
+    "name": "Pinarello Dogma",
+    "hasDiscount": false,
+    "originalPrice": 12000,
+    "image": "",
+    "star": 0
   }
 ]
