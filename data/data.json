@@ -53,10 +53,18 @@
   },
   {
     "id": "7",
-    "name": "Pinarello Dogma",
+    "name": "Pinarello Prince 2021",
     "hasDiscount": false,
     "originalPrice": 12000,
-    "image": "",
+    "image": "image-1685699727882-438177851.png",
+    "star": 0
+  },
+  {
+    "id": "8",
+    "name": "Pinarello Dogma F8",
+    "hasDiscount": false,
+    "originalPrice": 8500,
+    "image": "image-1685699853785-664418041.png",
     "star": 0
   }
 ]

@@ -3,6 +3,20 @@ const http = require('http');
 const fs = require('fs').promises;
 const data = require('./data/data.json');
 const { parse } = require('querystring');
+const path = require('path'); // Import the path module
+
+// middleware for uploading files + its config options (storage)
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: 'public/image',
+  filename: (request, file, callback) => {
+    // Generate a unique filename by appending the original file extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const fileExtension = path.extname(file.originalname);
+    const fileName = file.fieldname + '-' + uniqueSuffix + fileExtension;
+    callback(null, fileName); // null if for error, filename is stored inside the callback here
+  }
+});
 
 const server = http.createServer(async (request, response) => { // create a new server
   console.log('Server is running.');
@@ -65,38 +79,30 @@ const server = http.createServer(async (request, response) => { // create a new 
     response.end(html);
 
     if (request.method === 'POST') {
-      let body = '';
-      // Collect the form data
-      request.on('data', (chunk) => { // chunk = chunk of data, 2000 bites ?
-        console.log(chunk); // here we'll get the pure hex chunk of data
-        body += chunk.toString();
-        console.log(body);
-      }).on('end', async () => {
-        const formData = parse(body); // parsing the req body
-        console.log(formData);
-        const newBicycle = {
-          id: String(data.length + 1),
-          name: formData.name,
-          hasDiscount: false, // false as default
-          originalPrice: +formData.originalPrice,
-          image: '',
-          star: 0
-        };
-        data.push(newBicycle);
-        await fs.writeFile('./data/data.json', JSON.stringify(data, null, 2));
-        console.log(data);
-      });
+      const upload = multer({ storage }); // setting the options object
+      
+      upload.single('image')(request, response, async (error) => {
+        if (error) {
+          console.error(error);
+        } else {
 
-      // try {
-      //   // rewriting the data.json file with an updated data:
-      //   await fs.writeFile('./data/data.json', JSON.stringify(data, null, 2));
-      //   response.writeHead(200, { 'Content-Type': 'text/html' });
-      //   response.end('Bicycle added successfully!');
-      // } catch (error) {
-      //   console.error('Error writing data to file:', error);
-      //   response.writeHead(500, { 'Content-Type': 'text/html' });
-      //   response.end('Internal Server Error');
-      // }
+          const newBicycle = {
+            id: String(data.length + 1),
+            name: request.body.name,
+            hasDiscount: false, // false as default
+            originalPrice: +request.body.originalPrice,
+            image: request.file ? request.file.filename : '', // get the uploaded image filename from 'request.file'
+            star: 0
+          };
+    
+          data.push(newBicycle);
+          await fs.writeFile('./data/data.json', JSON.stringify(data, null, 2));
+        }
+    
+        response.writeHead(302, { Location: '/' }); // Redirect to the home page
+        response.end();
+      });
+      
     } else {
       response.writeHead(200, { 'Content-Type': 'text/html' });
       const html = await fs.readFile('./view/add.html', 'utf-8');
@@ -119,8 +125,6 @@ function replaceHtmlTemplate(html, bicycle){
     return html; // Return the original html without any replacements
   };
 
-  console.log(bicycle);
-
   html = html.replace(/<%IMAGE%>/g, bicycle.image); 
   html = html.replace(/<%NAME%>/g, bicycle.name);
   html = html.replace(/<%OLDPRICE%>/g, '$' + bicycle.originalPrice)
@@ -132,8 +136,8 @@ function replaceHtmlTemplate(html, bicycle){
   html = html.replace(/<%ID%>/g, +bicycle.id);
 
   bicycle.hasDiscount
-  ? (html = html.replace(/<%DISCOUNT%>/g, `<div class="discount__rate"><p>${bicycle.discount} % Off</p></div>`))
-  : (html = html.replace(/<%DISCOUNT%>/g, ``));
+    ? (html = html.replace(/<%DISCOUNT%>/g, `<div class="discount__rate"><p>${bicycle.discount} % Off</p></div>`))
+    : (html = html.replace(/<%DISCOUNT%>/g, ``));
 
   for (let i = 0; i < bicycle.star; i++){
     html = html.replace(/<%STAR%>/, `checked`); //
@@ -141,4 +145,4 @@ function replaceHtmlTemplate(html, bicycle){
   html = html.replace(/<%STAR%>/, ` `); 
 
   return html;
-}
+};
